@@ -18,14 +18,17 @@ class TorProject:
 
             # This is an example of what we want the regexp to find
             # href="/dist/torbrowser/9.0.1/tor-browser-linux64-9.0.1_en-US.tar.xz"
+            # href="/dist/torbrowser/10.0/tor-browser-linux64-10.0_en-US.tar.xz
+            # href="/dist/torbrowser/10.0.10/tor-browser-linux64-10.0.10_en-US.tar.xz
             re_download_link = (
-                r"""href="(/dist/torbrowser/(\d\.\d\.?\d?)/tor.+tar.xz)"""
+                r"""href="(/dist/torbrowser/(\d+\.\d+\.?\d+?)/tor.+tar.xz)"""
             )
             m = re.search(re_download_link, r.text)
             if m:
                 self.download_url = self.tor_project_root + m.group(1)
                 self.latest_version = m.group(2)
             else:
+                print(r.text)
                 raise ValueError("Could not find download link")
 
     def download_latest(self):
