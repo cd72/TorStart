@@ -5,6 +5,7 @@ import os
 import tarfile
 from distutils.version import StrictVersion
 import time
+import shutil
 
 
 class TorProject:
@@ -12,7 +13,7 @@ class TorProject:
 
     tor_project_root = "https://www.torproject.org"
     downloads_page = tor_project_root + "/download/"
-    
+
     """
     	GET /torbrowser/11.0.14/tor-browser-linux64-11.0.14_en-US.tar.xz HTTP/1.1
 	Host: dist.torproject.org
@@ -30,16 +31,16 @@ class TorProject:
 
     headers = {
         # 'Host': 'dist.torproject.org',
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:101.0) Gecko/20100101 Firefox/101.0',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'en-GB,en;q=0.5',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-	'Sec-Fetch-Mode': 'navigate',
-	'Sec-Fetch-Site': 'none',
-	'Sec-Fetch-User': '?1'
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:101.0) Gecko/20100101 Firefox/101.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-GB,en;q=0.5",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
     }
 
     def __init__(self):
@@ -69,7 +70,9 @@ class TorProject:
         print(self.headers)
         local_filename = self.download_url.split("/")[-1]
 
-        with requests.get(self.download_url, stream=True, headers=self.headers, timeout=5) as r:
+        with requests.get(
+            self.download_url, stream=True, headers=self.headers, timeout=5
+        ) as r:
             r.raise_for_status()
             with open(local_filename, "wb") as f:
                 for chunk in r.iter_content(chunk_size=1048576):
@@ -85,6 +88,10 @@ def get_current_tor_version():
     with open("current_tor_version.txt", "r") as f:
         current_tor_version = f.read().rstrip()
         return current_tor_version
+
+
+def remove_installed_version(version_to_remove):
+    shutil.rmtree(version_to_remove)
 
 
 def write_current_tor_version(version_string):
@@ -119,10 +126,12 @@ def main():
     print(f"Latest tor version is {tor_project.latest_version}!")
 
     if StrictVersion(current_tor_version) < StrictVersion(tor_project.latest_version):
+        remove_installed_version(current_tor_version)
         print("Downloading new version")
         download_file = tor_project.download_latest()
         install_new_version_from_xz(tor_project.latest_version, download_file)
         write_current_tor_version(tor_project.latest_version)
+        os.remove(download_file)
 
     print(f"Launching tor with {tor_project.latest_version}")
     launch_tor(tor_project.latest_version)
